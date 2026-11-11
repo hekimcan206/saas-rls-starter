@@ -6,7 +6,7 @@
 --  * nullif(..., ''): after a transaction that used SET LOCAL ends, or after RESET/DISCARD, a custom setting the
 --    session has seen reads back as '' rather than NULL. ''::uuid would raise; NULL makes every comparison false.
 -- Either way, no tenant means no rows and no writes (fail closed). A malformed value raises an error, also closed.
--- LANGUAGE sql + STABLE lets the planner inline it, so "tenant_id = app.current_tenant_id()" is an index condition.
+-- LANGUAGE sql + STABLE lets the planner inline it; the policies call it as (SELECT app.current_tenant_id()), see below.
 CREATE FUNCTION app.current_tenant_id() RETURNS uuid
     LANGUAGE sql STABLE PARALLEL SAFE
     AS $$ SELECT nullif(pg_catalog.current_setting('app.tenant_id', true), '')::uuid $$;
@@ -72,18 +72,21 @@ ALTER TABLE app.tenant_counters FORCE ROW LEVEL SECURITY;
 
 -- One permissive policy per table for all commands. USING filters what can be seen, updated and deleted; WITH CHECK
 -- rejects inserted or updated rows that would belong to another tenant ("new row violates row-level security policy").
+-- The function call is wrapped in a scalar subquery on purpose: PostgreSQL then evaluates it once per query (an
+-- InitPlan) instead of once per row. In a sequential scan the difference is large: aggregating 500,000 rows of one
+-- tenant took 202.7 ms with the bare call and 32.7 ms wrapped (median, docs/benchmarks.md). Index use is unaffected.
 CREATE POLICY tenant_isolation ON app.tenants
-    USING (id = app.current_tenant_id())
-    WITH CHECK (id = app.current_tenant_id());
+    USING (id = (SELECT app.current_tenant_id()))
+    WITH CHECK (id = (SELECT app.current_tenant_id()));
 CREATE POLICY tenant_isolation ON app.customers
-    USING (tenant_id = app.current_tenant_id())
-    WITH CHECK (tenant_id = app.current_tenant_id());
+    USING (tenant_id = (SELECT app.current_tenant_id()))
+    WITH CHECK (tenant_id = (SELECT app.current_tenant_id()));
 CREATE POLICY tenant_isolation ON app.orders
-    USING (tenant_id = app.current_tenant_id())
-    WITH CHECK (tenant_id = app.current_tenant_id());
+    USING (tenant_id = (SELECT app.current_tenant_id()))
+    WITH CHECK (tenant_id = (SELECT app.current_tenant_id()));
 CREATE POLICY tenant_isolation ON app.tenant_counters
-    USING (tenant_id = app.current_tenant_id())
-    WITH CHECK (tenant_id = app.current_tenant_id());
+    USING (tenant_id = (SELECT app.current_tenant_id()))
+    WITH CHECK (tenant_id = (SELECT app.current_tenant_id()));
 
 -- security_invoker: the view is evaluated with the caller's rights, so the caller's RLS policies apply. A default view
 -- runs with its owner's rights and would hide nothing from anyone the owner can see.

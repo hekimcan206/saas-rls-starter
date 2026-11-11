@@ -1,0 +1,111 @@
+  Host: npipe://./pipe/docker_engine
+  Server Version: 29.9.1
+  Kernel Version: 6.18.58.1-microsoft-standard-WSL2
+  API Version: 1.56
+  Operating System: Docker Desktop
+  Total Memory: 7.62 GB
+  Labels: 
+    com.docker.desktop.address=npipe://\\.\pipe\docker_cli
+Loading 500,000 rows per table ...
+Loaded in 12.5 s
+
+=== run 1/3
+  [1 tenant     ] point lookup by id                                         plain p50    0.393 ms  rls p50    0.399 ms  (+1.6%)
+  [1 tenant     ] latest 50 orders                                           plain p50    0.387 ms  rls p50    0.397 ms  (+2.5%)
+  [1 tenant     ] count + sum of tenant                                      plain p50   33.352 ms  rls p50  205.168 ms  (+515.2%)
+  [1 tenant     ] point lookup by id [policy: (SELECT fn())]                 plain p50    0.315 ms  rls p50    0.317 ms  (+0.6%)
+  [1 tenant     ] latest 50 orders [policy: (SELECT fn())]                   plain p50    0.349 ms  rls p50    0.353 ms  (+0.9%)
+  [1 tenant     ] count + sum of tenant [policy: (SELECT fn())]              plain p50   32.437 ms  rls p50   32.339 ms  (-0.3%)
+  [1,000 tenants] point lookup by id                                         plain p50    0.361 ms  rls p50    0.368 ms  (+2.0%)
+  [1,000 tenants] latest 50 orders                                           plain p50    0.404 ms  rls p50    0.412 ms  (+2.1%)
+  [1,000 tenants] count + sum of tenant                                      plain p50    0.840 ms  rls p50    0.852 ms  (+1.5%)
+  [1,000 tenants] point lookup by id [policy: (SELECT fn())]                 plain p50    0.402 ms  rls p50    0.409 ms  (+1.7%)
+  [1,000 tenants] latest 50 orders [policy: (SELECT fn())]                   plain p50    0.417 ms  rls p50    0.425 ms  (+1.9%)
+  [1,000 tenants] count + sum of tenant [policy: (SELECT fn())]              plain p50    0.821 ms  rls p50    0.838 ms  (+2.1%)
+  [1,000 tenants] latest 50 orders, NAIVE policy (tenant_id::text = setting) plain p50    0.643 ms  rls p50   85.787 ms  (+13233.3%)
+  [B] no RLS, autocommit, WHERE tenant_id = $1 (1 round trip)                    p50    0.462 ms  p95    0.936 ms
+  [B] no RLS, BEGIN + query, COMMIT (2 round trips)                              p50    0.746 ms  p95    1.763 ms
+  [B] RLS, BEGIN + set_config(..., true), query, COMMIT (3 round trips)          p50    1.269 ms  p95    2.627 ms
+  [B] RLS, SET LOCAL + query in one batch (1 round trip)                         p50    0.617 ms  p95    1.636 ms
+  [B] RLS, session variable preset, autocommit (1 round trip, lower bound)       p50    0.513 ms  p95    1.330 ms
+
+=== run 2/3
+  [1 tenant     ] point lookup by id                                         plain p50    0.366 ms  rls p50    0.370 ms  (+1.1%)
+  [1 tenant     ] latest 50 orders                                           plain p50    0.386 ms  rls p50    0.385 ms  (-0.3%)
+  [1 tenant     ] count + sum of tenant                                      plain p50   32.430 ms  rls p50  202.685 ms  (+525.0%)
+  [1 tenant     ] point lookup by id [policy: (SELECT fn())]                 plain p50    0.352 ms  rls p50    0.356 ms  (+1.2%)
+  [1 tenant     ] latest 50 orders [policy: (SELECT fn())]                   plain p50    0.364 ms  rls p50    0.368 ms  (+1.0%)
+  [1 tenant     ] count + sum of tenant [policy: (SELECT fn())]              plain p50   33.976 ms  rls p50   32.944 ms  (-3.0%)
+  [1,000 tenants] point lookup by id                                         plain p50    0.296 ms  rls p50    0.298 ms  (+0.9%)
+  [1,000 tenants] latest 50 orders                                           plain p50    0.324 ms  rls p50    0.329 ms  (+1.4%)
+  [1,000 tenants] count + sum of tenant                                      plain p50    0.679 ms  rls p50    0.688 ms  (+1.4%)
+  [1,000 tenants] point lookup by id [policy: (SELECT fn())]                 plain p50    0.310 ms  rls p50    0.316 ms  (+1.9%)
+  [1,000 tenants] latest 50 orders [policy: (SELECT fn())]                   plain p50    0.316 ms  rls p50    0.322 ms  (+1.7%)
+  [1,000 tenants] count + sum of tenant [policy: (SELECT fn())]              plain p50    0.768 ms  rls p50    0.783 ms  (+1.9%)
+  [1,000 tenants] latest 50 orders, NAIVE policy (tenant_id::text = setting) plain p50    0.594 ms  rls p50   84.266 ms  (+14079.0%)
+  [B] no RLS, autocommit, WHERE tenant_id = $1 (1 round trip)                    p50    0.511 ms  p95    1.021 ms
+  [B] no RLS, BEGIN + query, COMMIT (2 round trips)                              p50    0.733 ms  p95    1.400 ms
+  [B] RLS, BEGIN + set_config(..., true), query, COMMIT (3 round trips)          p50    1.164 ms  p95    2.029 ms
+  [B] RLS, SET LOCAL + query in one batch (1 round trip)                         p50    0.589 ms  p95    1.024 ms
+  [B] RLS, session variable preset, autocommit (1 round trip, lower bound)       p50    0.482 ms  p95    0.903 ms
+
+=== run 3/3
+  [1 tenant     ] point lookup by id                                         plain p50    0.324 ms  rls p50    0.325 ms  (+0.4%)
+  [1 tenant     ] latest 50 orders                                           plain p50    0.338 ms  rls p50    0.340 ms  (+0.5%)
+  [1 tenant     ] count + sum of tenant                                      plain p50   32.336 ms  rls p50  201.744 ms  (+523.9%)
+  [1 tenant     ] point lookup by id [policy: (SELECT fn())]                 plain p50    0.316 ms  rls p50    0.324 ms  (+2.3%)
+  [1 tenant     ] latest 50 orders [policy: (SELECT fn())]                   plain p50    0.351 ms  rls p50    0.355 ms  (+1.1%)
+  [1 tenant     ] count + sum of tenant [policy: (SELECT fn())]              plain p50   33.041 ms  rls p50   32.666 ms  (-1.1%)
+  [1,000 tenants] point lookup by id                                         plain p50    0.324 ms  rls p50    0.325 ms  (+0.5%)
+  [1,000 tenants] latest 50 orders                                           plain p50    0.424 ms  rls p50    0.430 ms  (+1.3%)
+  [1,000 tenants] count + sum of tenant                                      plain p50    0.732 ms  rls p50    0.744 ms  (+1.6%)
+  [1,000 tenants] point lookup by id [policy: (SELECT fn())]                 plain p50    0.339 ms  rls p50    0.348 ms  (+2.8%)
+  [1,000 tenants] latest 50 orders [policy: (SELECT fn())]                   plain p50    0.378 ms  rls p50    0.387 ms  (+2.6%)
+  [1,000 tenants] count + sum of tenant [policy: (SELECT fn())]              plain p50    0.746 ms  rls p50    0.763 ms  (+2.3%)
+  [1,000 tenants] latest 50 orders, NAIVE policy (tenant_id::text = setting) plain p50    0.674 ms  rls p50   80.987 ms  (+11910.6%)
+  [B] no RLS, autocommit, WHERE tenant_id = $1 (1 round trip)                    p50    0.477 ms  p95    0.963 ms
+  [B] no RLS, BEGIN + query, COMMIT (2 round trips)                              p50    0.812 ms  p95    1.765 ms
+  [B] RLS, BEGIN + set_config(..., true), query, COMMIT (3 round trips)          p50    1.373 ms  p95    2.716 ms
+  [B] RLS, SET LOCAL + query in one batch (1 round trip)                         p50    0.620 ms  p95    1.453 ms
+  [B] RLS, session variable preset, autocommit (1 round trip, lower bound)       p50    0.510 ms  p95    1.244 ms
+
+-- plan: rls_t1000 latest 50
+Limit (actual rows=50 loops=1)
+  ->  Index Scan using rls_t1000_tenant_id_created_at_idx on rls_t1000 (actual rows=50 loops=1)
+        Index Cond: (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)
+
+-- plan: naive_t1000 latest 50
+Limit (actual rows=50 loops=1)
+  ->  Sort (actual rows=50 loops=1)
+        Sort Key: created_at DESC
+        Sort Method: top-N heapsort  Memory: 28kB
+        ->  Seq Scan on naive_t1000 (actual rows=500 loops=1)
+              Filter: ((tenant_id)::text = current_setting('app.tenant_id'::text, true))
+              Rows Removed by Filter: 499500
+
+-- plan: rls_t1000 point lookup
+Index Scan using rls_t1000_pkey on rls_t1000 (actual rows=1 loops=1)
+  Index Cond: (id = 'b900e2a0-ab62-4185-960c-3a5311049175'::uuid)
+  Filter: (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)
+
+-- plan: rls_t1 count + sum
+Aggregate (actual rows=1 loops=1)
+  ->  Index Scan using rls_t1_tenant_id_created_at_idx on rls_t1 (actual rows=0 loops=1)
+        Index Cond: (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)
+
+-- plan: sub_t1 count + sum
+Aggregate (actual rows=1 loops=1)
+  InitPlan 1
+    ->  Result (actual rows=1 loops=1)
+  ->  Seq Scan on sub_t1 (actual rows=0 loops=1)
+        Filter: (tenant_id = (InitPlan 1).col1)
+        Rows Removed by Filter: 500000
+
+-- plan: sub_t1000 latest 50
+Limit (actual rows=50 loops=1)
+  InitPlan 1
+    ->  Result (actual rows=1 loops=1)
+  ->  Index Scan using sub_t1000_tenant_id_created_at_idx on sub_t1000 (actual rows=50 loops=1)
+        Index Cond: (tenant_id = (InitPlan 1).col1)
+
+wrote benchmark-results\rls-overhead-20261111-192037.json

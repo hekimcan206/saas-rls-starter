@@ -1,0 +1,18 @@
+{
+  "rows": 500000,
+  "runs": 0,
+  "server": "PostgreSQL 17.11 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "dotnet": "10.0.12",
+  "os": "Microsoft Windows 10.0.26200",
+  "processors": 16,
+  "results": [],
+  "plans": {
+    "rls_t1000 latest 50": "Limit (actual rows=50 loops=1)\n  -\u003E  Index Scan using rls_t1000_tenant_id_created_at_idx on rls_t1000 (actual rows=50 loops=1)\n        Index Cond: (tenant_id = (NULLIF(current_setting(\u0027app.tenant_id\u0027::text, true), \u0027\u0027::text))::uuid)",
+    "naive_t1000 latest 50": "Limit (actual rows=50 loops=1)\n  -\u003E  Sort (actual rows=50 loops=1)\n        Sort Key: created_at DESC\n        Sort Method: top-N heapsort  Memory: 28kB\n        -\u003E  Seq Scan on naive_t1000 (actual rows=500 loops=1)\n              Filter: ((tenant_id)::text = current_setting(\u0027app.tenant_id\u0027::text, true))\n              Rows Removed by Filter: 499500",
+    "rls_t1000 point lookup": "Index Scan using rls_t1000_pkey on rls_t1000 (actual rows=1 loops=1)\n  Index Cond: (id = \u00274ad916b0-77eb-406d-a5c4-306518d6cd23\u0027::uuid)\n  Filter: (tenant_id = (NULLIF(current_setting(\u0027app.tenant_id\u0027::text, true), \u0027\u0027::text))::uuid)",
+    "sub_t1000 latest 50": "Limit (actual rows=50 loops=1)\n  InitPlan 1\n    -\u003E  Result (actual rows=1 loops=1)\n  -\u003E  Index Scan using sub_t1000_tenant_id_created_at_idx on sub_t1000 (actual rows=50 loops=1)\n        Index Cond: (tenant_id = (InitPlan 1).col1)",
+    "plain_t1 count \u002B sum": "Aggregate (actual rows=1 loops=1)\n  -\u003E  Seq Scan on plain_t1 (actual rows=500000 loops=1)\n        Filter: (tenant_id = \u002700000000-0000-4000-8000-000000000001\u0027::uuid)",
+    "rls_t1 count \u002B sum": "Aggregate (actual rows=1 loops=1)\n  -\u003E  Seq Scan on rls_t1 (actual rows=500000 loops=1)\n        Filter: (tenant_id = (NULLIF(current_setting(\u0027app.tenant_id\u0027::text, true), \u0027\u0027::text))::uuid)",
+    "sub_t1 count \u002B sum": "Aggregate (actual rows=1 loops=1)\n  InitPlan 1\n    -\u003E  Result (actual rows=1 loops=1)\n  -\u003E  Seq Scan on sub_t1 (actual rows=500000 loops=1)\n        Filter: (tenant_id = (InitPlan 1).col1)"
+  }
+}

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using SaasRls.Api.Api;
 using SaasRls.Tenancy.Context;
@@ -14,6 +15,12 @@ internal sealed class DatabaseExceptionHandler(IProblemDetailsService problems) 
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
+        // EF Core wraps the database error of a failed SaveChanges.
+        if (exception is DbUpdateException { InnerException: PostgresException inner })
+        {
+            exception = inner;
+        }
+
         var (status, title) = exception switch
         {
             AdminReasonMissingException => (StatusCodes.Status400BadRequest, exception.Message),

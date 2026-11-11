@@ -68,8 +68,9 @@ app.UseSerilogRequestLogging(options => options.GetLevel = (context, _, exceptio
         : Serilog.Events.LogEventLevel.Information);
 
 app.UseAuthentication();
-app.UseTenantResolution();
 app.UseAuthorization();
+// After authorization: an anonymous caller gets 401 from the policy, not "tenant required".
+app.UseTenantResolution();
 
 if (app.Configuration.GetValue<bool>("OpenApi:Enabled"))
 {

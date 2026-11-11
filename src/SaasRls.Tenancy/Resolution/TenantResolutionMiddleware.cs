@@ -63,7 +63,7 @@ public static class TenantEndpointExtensions
         return builder;
     }
 
-    /// <summary>Adds tenant resolution. Call after <c>UseAuthentication</c> and before the endpoints run.</summary>
+    /// <summary>Adds tenant resolution. Call after <c>UseAuthentication</c> and <c>UseAuthorization</c>.</summary>
     public static IApplicationBuilder UseTenantResolution(this IApplicationBuilder app) =>
         app.UseMiddleware<TenantResolutionMiddleware>();
 

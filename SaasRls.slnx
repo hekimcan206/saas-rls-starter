@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/SaasRls.Tenancy/SaasRls.Tenancy.csproj" />
+    <Project Path="src/SaasRls.Tenancy.EntityFrameworkCore/SaasRls.Tenancy.EntityFrameworkCore.csproj" />
   </Folder>
 </Solution>

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>SaasRls.Demo</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Dapper" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The API project for its token issuer and response contracts; the demo talks to the API over HTTP only. -->
+    <ProjectReference Include="..\..\src\SaasRls.Api\SaasRls.Api.csproj" />
+    <ProjectReference Include="..\..\src\SaasRls.Tenancy\SaasRls.Tenancy.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,103 @@
+# `docker compose up` runs the whole demo with zero manual steps:
+#   postgres   PostgreSQL 17, initialised with the four roles (deploy/postgres/init/01-roles.sh)
+#   pgbouncer  PgBouncer 1.25 in TRANSACTION mode in front of it. Pools: "saas" for the API and "saas_tiny" (one
+#              server connection) where the demo shows a session-level SET leaking between clients
+#   migrator   API image with --migrate-only: connects as saas_migrator (table owner), applies the SQL migrations, exits
+#   api        connects as saas_app THROUGH PgBouncer (transaction mode is safe because the tenant is only ever set
+#              with SET LOCAL), and as saas_admin directly for the audited cross-tenant functions. Refuses to start if
+#              the RLS guard finds an unsafe role or table
+#   demo       onboards two tenants, checks isolation through the API, replays the connection-pool pitfalls against
+#              PostgreSQL and PgBouncer, prints the audit trail; exits 0 only if every expectation holds
+name: saas-rls-starter
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: saas
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres-dev-only}
+      MIGRATOR_PASSWORD: ${MIGRATOR_PASSWORD:-migrator-dev-only}
+      APP_PASSWORD: ${APP_PASSWORD:-app-dev-only}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin-dev-only}
+    ports:
+      # Loopback only: for `dotnet run` (appsettings.Development.json), psql, and the benchmarks' reproduction notes.
+      - "127.0.0.1:${POSTGRES_PORT:-58932}:5432"
+    volumes:
+      - ./deploy/postgres/init:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d saas"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  pgbouncer:
+    image: pgbouncer/pgbouncer:1.25.1
+    environment:
+      DATABASES: "saas = host=postgres port=5432 dbname=saas,saas_tiny = host=postgres port=5432 dbname=saas pool_size=1"
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_DEFAULT_POOL_SIZE: "20"
+      PGBOUNCER_MAX_CLIENT_CONN: "500"
+      PGBOUNCER_AUTH_TYPE: scram-sha-256
+      PGBOUNCER_AUTH_FILE: /tmp/userlist.txt
+      APP_PASSWORD: ${APP_PASSWORD:-app-dev-only}
+    # The auth file is written from the environment at start, so changing APP_PASSWORD in .env is enough.
+    entrypoint: ["/bin/sh", "-c", "printf '\"saas_app\" \"%s\"\\n' \"$$APP_PASSWORD\" > /tmp/userlist.txt && exec /opt/pgbouncer/entrypoint.sh"]
+    ports:
+      - "127.0.0.1:${PGBOUNCER_PORT:-58933}:6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  migrator:
+    image: saas-rls-starter-api:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["--migrate-only"]
+    environment:
+      ConnectionStrings__Migrator: Host=postgres;Database=saas;Username=saas_migrator;Password=${MIGRATOR_PASSWORD:-migrator-dev-only}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: saas-rls-starter-api:local
+    ports:
+      - "127.0.0.1:${API_PORT:-58980}:8080"
+    environment:
+      # Through PgBouncer. No Reset On Close: Npgsql's DISCARD ALL is meaningless behind a transaction pooler.
+      ConnectionStrings__App: Host=pgbouncer;Port=6432;Database=saas;Username=saas_app;Password=${APP_PASSWORD:-app-dev-only};No Reset On Close=true;Timeout=5
+      ConnectionStrings__Admin: Host=postgres;Database=saas;Username=saas_admin;Password=${ADMIN_PASSWORD:-admin-dev-only};Timeout=5
+      Auth__SigningKey: ${AUTH_SIGNING_KEY:-dev-only-signing-key-change-me-0123456789abcdef}
+      Auth__EnableDevTokens: "true"
+      OpenApi__Enabled: "true"
+      OTEL_SERVICE_NAME: saas-rls-starter
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_started
+    # No container HEALTHCHECK: the chiseled image has no shell or curl. Probe /health/live and /health/ready over HTTP.
+    restart: unless-stopped
+
+  demo:
+    image: saas-rls-starter-demo:local
+    build:
+      context: .
+      dockerfile: samples/SaasRls.Demo/Dockerfile
+    environment:
+      API_URL: http://api:8080/
+      AUTH_SIGNING_KEY: ${AUTH_SIGNING_KEY:-dev-only-signing-key-change-me-0123456789abcdef}
+      DIRECT_DB: Host=postgres;Database=saas;Username=saas_app;Password=${APP_PASSWORD:-app-dev-only}
+      PGBOUNCER_DB: Host=pgbouncer;Port=6432;Database=saas_tiny;Username=saas_app;Password=${APP_PASSWORD:-app-dev-only}
+    depends_on:
+      api:
+        condition: service_started
+    restart: "no"
+
+volumes:
+  pgdata:

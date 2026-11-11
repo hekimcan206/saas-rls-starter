@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/TestResults/
+.git/
+.github/
+.vs/
+.vscode/
+.idea/
+docs/
+tests/
+benchmarks/
+benchmark-results/
+*.md
+.env
+docker-compose*.yml

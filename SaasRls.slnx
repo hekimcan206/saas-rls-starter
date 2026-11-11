@@ -4,6 +4,9 @@
     <Project Path="src/SaasRls.Tenancy.EntityFrameworkCore/SaasRls.Tenancy.EntityFrameworkCore.csproj" />
     <Project Path="src/SaasRls.Api/SaasRls.Api.csproj" />
   </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/SaasRls.Demo/SaasRls.Demo.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/SaasRls.UnitTests/SaasRls.UnitTests.csproj" />
     <Project Path="tests/SaasRls.IntegrationTests/SaasRls.IntegrationTests.csproj" />

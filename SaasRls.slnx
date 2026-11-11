@@ -6,5 +6,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/SaasRls.UnitTests/SaasRls.UnitTests.csproj" />
+    <Project Path="tests/SaasRls.IntegrationTests/SaasRls.IntegrationTests.csproj" />
   </Folder>
 </Solution>
